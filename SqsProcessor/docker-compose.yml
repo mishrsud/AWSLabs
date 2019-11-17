@@ -1,0 +1,6 @@
+version: '3'
+services:
+  sqs-message-processor-tests:
+    build:
+      context: .
+    container_name: sqs-message-processor-tests

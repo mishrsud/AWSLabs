@@ -1,0 +1,30 @@
+root = true
+
+[*]
+charset = utf-8
+
+[*.sh]
+end_of_line = lf
+indent_style = space
+indent_size = 2
+
+[{*.yml,*.yaml}]
+indent_style = space
+indent_size = 2
+
+[*.cs] 
+indent_size = 4 
+insert_final_newline = true 
+charset = utf-8
+
+dotnet_sort_system_directives_first = true 
+
+# Instance fields are camelCase and start with _
+dotnet_naming_rule.instance_fields_should_be_camel_case.severity = suggestion
+dotnet_naming_rule.instance_fields_should_be_camel_case.symbols = instance_fields
+dotnet_naming_rule.instance_fields_should_be_camel_case.style = instance_field_style
+
+dotnet_naming_symbols.instance_fields.applicable_kinds = field
+
+dotnet_naming_style.instance_field_style.capitalization = camel_case
+dotnet_naming_style.instance_field_style.required_prefix = _

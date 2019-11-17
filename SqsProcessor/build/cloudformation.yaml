@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: A Lambda function that subscribes to SQS and handles messages
+
+Parameters:
+  Environment:
+    Description: The environment being deployed
+    Type: String
+    AllowedValues:
+      - Development
+      - Performance
+      - Production
+Globals:
+  Function:
+    Runtime: dotnetcore2.1
+    Timeout: 120
+    Environment:
+      Variables:
+        ASPNETCORE_ENVIRONMENT: !Sub ${Environment}
+        QUEUE_URL: !Ref MessagesQueue
+
+Resources:
+  MessageProcessor:
+    Type: AWS::Serverless::Function
+    DependsOn: MessageProcessorLogGroup
+    Properties:
+      FunctionName: !Sub ${AWS::StackName}-function
+      Description: Subscribes to SQS and handles messages
+      CodeUri: ./output/publish/
+      Handler: MessageProcessor::MessageProcessor.Lambda::Execute
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt MessagesQueue.QueueName
+      Events:
+        MessageReceivedEvent:
+          Type: SQS
+          Properties:
+              Queue: !GetAtt MessagesQueue.Arn
+              BatchSize: 10
+
+  MessagesQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${AWS::StackName}-messages-inq"
+      MessageRetentionPeriod: 1209600     #14 days
+      VisibilityTimeout: 720              # 6 times lambda timeout
+      RedrivePolicy: 
+        deadLetterTargetArn: !GetAtt MessagesDeadLetterQueue.Arn
+        maxReceiveCount: 3
+
+  MessagesDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${AWS::StackName}-messages-dlq"
+      VisibilityTimeout: 720                         
+
+  MessageProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      RetentionInDays: 14
+      LogGroupName: !Sub /aws/lambda/${AWS::StackName}
